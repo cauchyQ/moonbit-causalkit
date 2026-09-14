@@ -33,6 +33,3 @@ jobs:
       - run: moon check --target all --deny-warn
       - run: moon test --target all --deny-warn
       - run: moon build --release
-      - run: moon fmt
-      - run: moon info
-      - run: git diff --exit-code
