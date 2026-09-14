@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  moonbit:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: moonbitlang/setup-moonbit@v1
+      - run: moon check --target all --deny-warn
+      - run: moon test --target all --deny-warn
+      - run: moon build --release
+      - run: moon fmt
+      - run: moon info
+      - run: git diff --exit-code
