@@ -1,0 +1,640 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "cauchyQ/moonbit-causalkit"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn advance_checkpoint(CausalCheckpoint, CheckpointPlan) -> CausalCheckpoint
+
+pub fn common_frontier(VersionVector, VersionVector) -> VersionVector
+
+pub fn concurrency_report_lines(TraceAnalysis) -> Array[String]
+
+pub fn edge_rows(TraceAnalysis) -> Array[EdgeRow]
+
+pub fn events_missing_on_right(VersionVector, VersionVector) -> Int
+
+pub fn layer_report_lines(TraceAnalysis) -> Array[String]
+
+pub fn missing_sync_dots(Array[LoggedOperation], Array[SyncRange]) -> DotSet
+
+pub fn operation_log_frontier(OperationLog) -> VersionVector
+
+pub fn plan_checkpoint(OperationLog, VersionVector, String, Int) -> Result[CheckpointPlan, CheckpointError]
+
+pub fn plan_sync(VersionVector, VersionVector) -> Array[SyncRange]
+
+pub fn replay_after(CausalCheckpoint, OperationLog) -> Array[LoggedOperation]
+
+pub fn replicas_ahead(VersionVector, VersionVector) -> Array[String]
+
+pub fn same_frontier(VersionVector, VersionVector) -> Bool
+
+pub fn select_sync_entries(OperationLog, Array[SyncRange]) -> Array[LoggedOperation]
+
+pub fn sync_batch_frontier(Array[LoggedOperation]) -> VersionVector
+
+pub fn sync_operation_count(Array[SyncRange]) -> Int
+
+pub fn trace_dot_lines(TraceAnalysis) -> Array[String]
+
+pub fn trace_kind_detail(TraceKind) -> String
+
+pub fn trace_kind_name(TraceKind) -> String
+
+pub fn trace_mermaid_lines(TraceAnalysis) -> Array[String]
+
+pub fn trace_rows(Array[TraceEvent]) -> Array[TraceRow]
+
+pub fn validate_checkpoint_against(CausalCheckpoint, OperationLog) -> Result[Unit, CheckpointError]
+
+pub fn validate_replay(CausalCheckpoint, Array[LoggedOperation]) -> Result[VersionVector, CheckpointError]
+
+pub fn vector_differences(VersionVector, VersionVector) -> Array[VectorDifference]
+
+pub fn vector_distance(VersionVector, VersionVector) -> Int
+
+// Errors
+
+// Types and methods
+pub(all) struct BatchDelivery {
+  buffer : CausalBuffer
+  released : Array[CausalOperation]
+  accepted_count : Int
+  duplicate_count : Int
+} derive(@debug.Debug)
+pub fn BatchDelivery::append_to_log(Self, OperationLog, Int) -> OperationLog
+pub fn BatchDelivery::frontier(Self) -> VersionVector
+
+pub(all) enum BatchError {
+  EmptyBatchSource
+  EmptyBatchId
+  DuplicateBatchOperation(String)
+  DuplicateBatchDot(String, Int)
+  BatchCounterBeyondFrontier(String, Int, Int)
+  BatchDependencyBeyondFrontier(String, String, Int, Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum BufferError {
+  EmptyOperationId
+  EmptyReplicaId
+  NonPositiveCounter(Int)
+} derive(Eq, @debug.Debug)
+
+pub struct CausalBuffer {
+  applied : VersionVector
+  pending : Array[CausalOperation]
+} derive(@debug.Debug)
+pub fn CausalBuffer::applied(Self) -> VersionVector
+pub fn CausalBuffer::new() -> Self
+pub fn CausalBuffer::offer(Self, CausalOperation) -> (Self, Array[CausalOperation])
+pub fn CausalBuffer::pending(Self) -> Array[CausalOperation]
+
+pub(all) struct CausalCheckpoint {
+  frontier : VersionVector
+  state : String
+  operation_count : Int
+  created_at : Int
+} derive(Eq, @debug.Debug)
+pub fn CausalCheckpoint::created_at(Self) -> Int
+pub fn CausalCheckpoint::frontier(Self) -> VersionVector
+pub fn CausalCheckpoint::new(VersionVector, String, Int, Int) -> Result[Self, CheckpointError]
+pub fn CausalCheckpoint::operation_count(Self) -> Int
+pub fn CausalCheckpoint::state(Self) -> String
+
+pub(all) struct CausalEdge {
+  earlier : TraceEvent
+  later : TraceEvent
+} derive(@debug.Debug)
+
+pub(all) struct CausalLayer {
+  index : Int
+  events : Array[TraceEvent]
+} derive(@debug.Debug)
+
+pub struct CausalMap {
+  entries : Array[CausalMapEntry]
+  tombstones : Array[CausalMapTombstone]
+  context : VersionVector
+} derive(@debug.Debug)
+pub fn CausalMap::compact(Self, VersionVector) -> Self
+pub fn CausalMap::contains_key(Self, String) -> Bool
+pub fn CausalMap::context(Self) -> VersionVector
+pub fn CausalMap::entries(Self) -> Array[CausalMapEntry]
+pub fn CausalMap::get(Self, String) -> MultiValueRegister?
+pub fn CausalMap::keys(Self) -> Array[String]
+pub fn CausalMap::merge(Self, Self) -> Self
+pub fn CausalMap::new() -> Self
+pub fn CausalMap::put(Self, String, String, String) -> Result[Self, CausalMapError]
+pub fn CausalMap::remove(Self, String) -> Result[Self, CausalMapError]
+pub fn CausalMap::tombstones(Self) -> Array[CausalMapTombstone]
+
+pub(all) struct CausalMapEntry {
+  key : String
+  register : MultiValueRegister
+} derive(@debug.Debug)
+
+pub(all) enum CausalMapError {
+  EmptyMapKey
+  EmptyMapWriter
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CausalMapTombstone {
+  key : String
+  context : VersionVector
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CausalOperation {
+  id : String
+  replica : String
+  counter : Int
+  prerequisites : VersionVector
+  payload : String
+} derive(@debug.Debug)
+pub fn CausalOperation::new(String, String, Int, VersionVector, String) -> Result[Self, BufferError]
+
+pub(all) enum CausalOrder {
+  Before
+  After
+  Equal
+  Concurrent
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CausalPath {
+  events : Array[TraceEvent]
+} derive(@debug.Debug)
+
+pub(all) enum CheckpointError {
+  NegativeCheckpointOperationCount(Int)
+  NegativeCheckpointTime(Int)
+  CheckpointAheadOfLog(String, Int, Int)
+  ReplayGap(String, Int, Int)
+  ReplayDependencyMissing(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CheckpointPlan {
+  checkpoint : CausalCheckpoint
+  stable_entries : Array[LoggedOperation]
+  replay_log : OperationLog
+} derive(@debug.Debug)
+
+pub(all) enum ClockDiagnosticError {
+  NegativeRollbackThreshold(Int)
+  NegativeForwardJumpThreshold(Int)
+  NegativeClockReading(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ClockDiagnosticPolicy {
+  maximum_rollback : Int
+  maximum_forward_jump : Int
+} derive(Eq, @debug.Debug)
+pub fn ClockDiagnosticPolicy::new(Int, Int) -> Result[Self, ClockDiagnosticError]
+
+pub struct ClockDiagnostics {
+  policy : ClockDiagnosticPolicy
+  last_reading : Int
+  samples : Array[ClockSample]
+  rollback_count : Int
+  forward_jump_count : Int
+} derive(@debug.Debug)
+pub fn ClockDiagnostics::anomalies(Self) -> Array[ClockSample]
+pub fn ClockDiagnostics::forward_jump_count(Self) -> Int
+pub fn ClockDiagnostics::has_anomaly(Self) -> Bool
+pub fn ClockDiagnostics::last_reading(Self) -> Int
+pub fn ClockDiagnostics::new(ClockDiagnosticPolicy, Int) -> Result[Self, ClockDiagnosticError]
+pub fn ClockDiagnostics::observe(Self, Int) -> Result[Self, ClockDiagnosticError]
+pub fn ClockDiagnostics::reset(Self) -> Self
+pub fn ClockDiagnostics::rollback_count(Self) -> Int
+pub fn ClockDiagnostics::samples(Self) -> Array[ClockSample]
+
+pub(all) enum ClockError {
+  NodeMismatch(expected~ : String, found~ : String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ClockReadingStatus {
+  ClockReadingAccepted
+  ClockRollback(Int)
+  ClockForwardJump(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ClockSample {
+  reading : Int
+  previous : Int
+  status : ClockReadingStatus
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ConcurrentPair {
+  first : TraceEvent
+  second : TraceEvent
+} derive(@debug.Debug)
+
+pub(all) struct CounterComponent {
+  replica : String
+  positive : Int
+  negative : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum CounterError {
+  EmptyCounterReplica
+  NegativeCounterComponent(String, Int, Int)
+  NegativeCounterAmount(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Dot {
+  replica : String
+  counter : Int
+} derive(Eq, @debug.Debug)
+pub fn Dot::compare(Self, Self) -> Int
+pub fn Dot::context(Self) -> VersionVector
+pub fn Dot::is_covered_by(Self, VersionVector) -> Bool
+pub fn Dot::new(String, Int) -> Result[Self, DotError]
+
+pub(all) enum DotError {
+  EmptyDotReplica
+  NonPositiveDotCounter(Int)
+} derive(Eq, @debug.Debug)
+
+pub struct DotSet {
+  dots : Array[Dot]
+} derive(Eq, @debug.Debug)
+pub fn DotSet::add(Self, Dot) -> Self
+pub fn DotSet::after(Self, VersionVector) -> Self
+pub fn DotSet::contains(Self, Dot) -> Bool
+pub fn DotSet::covered(Self, VersionVector) -> Self
+pub fn DotSet::difference(Self, Self) -> Self
+pub fn DotSet::dots(Self) -> Array[Dot]
+pub fn DotSet::from_array(Array[Dot]) -> Result[Self, DotError]
+pub fn DotSet::frontier(Self) -> VersionVector
+pub fn DotSet::intersection(Self, Self) -> Self
+pub fn DotSet::is_subset_of(Self, Self) -> Bool
+pub fn DotSet::length(Self) -> Int
+pub fn DotSet::new() -> Self
+pub fn DotSet::next_counter(Self, String) -> Int
+pub fn DotSet::remove(Self, Dot) -> Self
+pub fn DotSet::union(Self, Self) -> Self
+
+pub(all) struct EdgeRow {
+  from_sequence : Int
+  to_sequence : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct HlcClock {
+  node : String
+  mut last : HlcTimestamp
+} derive(@debug.Debug)
+pub fn HlcClock::last(Self) -> HlcTimestamp
+pub fn HlcClock::new(String, Int) -> Result[Self, TimestampError]
+pub fn HlcClock::receive(Self, HlcTimestamp, Int) -> HlcTimestamp
+pub fn HlcClock::restore(String, HlcTimestamp) -> Result[Self, ClockError]
+pub fn HlcClock::tick(Self, Int) -> HlcTimestamp
+
+pub(all) struct HlcTimestamp {
+  physical : Int
+  logical : Int
+  node : String
+} derive(Eq, @debug.Debug)
+pub fn HlcTimestamp::compare(Self, Self) -> Int
+pub fn HlcTimestamp::new(Int, Int, String) -> Result[Self, TimestampError]
+pub fn HlcTimestamp::precedes_or_equals(Self, Self) -> Bool
+pub fn HlcTimestamp::to_string(Self) -> String
+
+pub(all) enum LastWriterWinsError {
+  EmptyLastWriter
+} derive(Eq, @debug.Debug)
+
+pub(all) struct LastWriterWinsRegister {
+  value : String
+  writer : String
+  timestamp : HlcTimestamp
+} derive(Eq, @debug.Debug)
+pub fn LastWriterWinsRegister::dominates(Self, Self) -> Bool
+pub fn LastWriterWinsRegister::merge(Self, Self) -> Self
+pub fn LastWriterWinsRegister::new(String, String, HlcTimestamp) -> Result[Self, LastWriterWinsError]
+pub fn LastWriterWinsRegister::timestamp(Self) -> HlcTimestamp
+pub fn LastWriterWinsRegister::value(Self) -> String
+pub fn LastWriterWinsRegister::write(Self, String, String, HlcTimestamp) -> Result[Self, LastWriterWinsError]
+pub fn LastWriterWinsRegister::writer(Self) -> String
+
+pub(all) struct LoggedOperation {
+  operation : CausalOperation
+  applied_at : Int
+} derive(@debug.Debug)
+
+pub(all) enum MemberStatus {
+  Active
+  Retired
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MembershipError {
+  EmptyMemberReplica
+  NonPositiveGeneration(String, Int)
+  DuplicateMember(String)
+  UnknownMember(String)
+} derive(Eq, @debug.Debug)
+
+pub struct MembershipView {
+  members : Array[ReplicaMember]
+} derive(Eq, @debug.Debug)
+pub fn MembershipView::active_replicas(Self) -> Array[String]
+pub fn MembershipView::from_members(Array[ReplicaMember]) -> Result[Self, MembershipError]
+pub fn MembershipView::is_active(Self, String) -> Bool
+pub fn MembershipView::join(Self, String) -> Result[Self, MembershipError]
+pub fn MembershipView::members(Self) -> Array[ReplicaMember]
+pub fn MembershipView::merge(Self, Self) -> Self
+pub fn MembershipView::new() -> Self
+pub fn MembershipView::reactivate(Self, String) -> Result[Self, MembershipError]
+pub fn MembershipView::record(Self, String) -> ReplicaMember?
+pub fn MembershipView::retire(Self, String) -> Result[Self, MembershipError]
+pub fn MembershipView::retired_replicas(Self) -> Array[String]
+pub fn MembershipView::stability_tracker(Self) -> Result[StabilityTracker, StabilityError]
+
+pub struct MultiValueRegister {
+  values : Array[VersionedValue]
+} derive(@debug.Debug)
+pub fn MultiValueRegister::apply(Self, VersionedValue) -> Self
+pub fn MultiValueRegister::context(Self) -> VersionVector
+pub fn MultiValueRegister::merge(Self, Self) -> Self
+pub fn MultiValueRegister::new() -> Self
+pub fn MultiValueRegister::resolved(Self) -> VersionedValue?
+pub fn MultiValueRegister::state(Self) -> RegisterState
+pub fn MultiValueRegister::values(Self) -> Array[VersionedValue]
+pub fn MultiValueRegister::write(Self, String, String) -> Result[Self, RegisterError]
+
+pub(all) enum ObservedRemoveError {
+  EmptySetReplica
+} derive(Eq, @debug.Debug)
+
+pub struct ObservedRemoveSet {
+  values : Array[ObservedValue]
+  removals : DotSet
+  context : VersionVector
+} derive(Eq, @debug.Debug)
+pub fn ObservedRemoveSet::add(Self, String, String) -> Result[Self, ObservedRemoveError]
+pub fn ObservedRemoveSet::compact(Self, VersionVector) -> Self
+pub fn ObservedRemoveSet::contains(Self, String) -> Bool
+pub fn ObservedRemoveSet::context(Self) -> VersionVector
+pub fn ObservedRemoveSet::entries(Self) -> Array[ObservedValue]
+pub fn ObservedRemoveSet::merge(Self, Self) -> Self
+pub fn ObservedRemoveSet::new() -> Self
+pub fn ObservedRemoveSet::removals(Self) -> DotSet
+pub fn ObservedRemoveSet::remove(Self, String) -> Self
+pub fn ObservedRemoveSet::values(Self) -> Array[String]
+
+pub(all) struct ObservedValue {
+  value : String
+  additions : DotSet
+} derive(Eq, @debug.Debug)
+
+pub struct OperationLog {
+  entries : Array[LoggedOperation]
+} derive(@debug.Debug)
+pub fn OperationLog::append(Self, Array[CausalOperation], Int) -> Self
+pub fn OperationLog::compact(Self, VersionVector) -> (Array[LoggedOperation], Self)
+pub fn OperationLog::entries(Self) -> Array[LoggedOperation]
+pub fn OperationLog::length(Self) -> Int
+pub fn OperationLog::new() -> Self
+pub fn OperationLog::stable_prefix(Self, VersionVector) -> Array[LoggedOperation]
+
+pub(all) struct PendingMessage {
+  source : String
+  target : String
+  payload : String
+  sent_at : Int
+  deliver_at : Int
+  stamp : HlcTimestamp
+  context : VersionVector
+} derive(@debug.Debug)
+
+pub struct PnCounter {
+  components : Array[CounterComponent]
+} derive(Eq, @debug.Debug)
+pub fn PnCounter::components(Self) -> Array[CounterComponent]
+pub fn PnCounter::decrement(Self, String) -> Result[Self, CounterError]
+pub fn PnCounter::decrement_by(Self, String, Int) -> Result[Self, CounterError]
+pub fn PnCounter::delta_since(Self, Self) -> Self
+pub fn PnCounter::from_components(Array[CounterComponent]) -> Result[Self, CounterError]
+pub fn PnCounter::increment(Self, String) -> Result[Self, CounterError]
+pub fn PnCounter::increment_by(Self, String, Int) -> Result[Self, CounterError]
+pub fn PnCounter::is_included_in(Self, Self) -> Bool
+pub fn PnCounter::merge(Self, Self) -> Self
+pub fn PnCounter::negative_of(Self, String) -> Int
+pub fn PnCounter::new() -> Self
+pub fn PnCounter::positive_of(Self, String) -> Int
+pub fn PnCounter::value(Self) -> Int
+
+pub(all) enum RegisterError {
+  EmptyWriter
+} derive(Eq, @debug.Debug)
+
+pub(all) enum RegisterState {
+  Empty
+  Resolved(VersionedValue)
+  Conflict(Array[VersionedValue])
+} derive(@debug.Debug)
+
+pub(all) struct ReplicaAcknowledgement {
+  replica : String
+  context : VersionVector
+} derive(@debug.Debug)
+
+pub(all) struct ReplicaDigest {
+  replica : String
+  frontier : VersionVector
+} derive(Eq, @debug.Debug)
+pub fn ReplicaDigest::new(String, VersionVector) -> Result[Self, SyncError]
+
+pub(all) struct ReplicaMember {
+  replica : String
+  generation : Int
+  status : MemberStatus
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ReplicaState {
+  id : String
+  clock : HlcClock
+  vector : VersionVector
+  online : Bool
+} derive(@debug.Debug)
+
+pub(all) struct ReplicationBatch {
+  source : String
+  batch_id : String
+  operations : Array[CausalOperation]
+  advertised_frontier : VersionVector
+} derive(@debug.Debug)
+pub fn ReplicationBatch::after(Self, VersionVector) -> Self
+pub fn ReplicationBatch::contains_id(Self, String) -> Bool
+pub fn ReplicationBatch::deliver(Self, CausalBuffer) -> BatchDelivery
+pub fn ReplicationBatch::length(Self) -> Int
+pub fn ReplicationBatch::new(String, String, Array[CausalOperation], VersionVector) -> Result[Self, BatchError]
+pub fn ReplicationBatch::operations(Self) -> Array[CausalOperation]
+
+pub(all) struct Simulator {
+  mut time : Int
+  mut replicas : Array[ReplicaState]
+  mut pending : Array[PendingMessage]
+  mut trace : Array[TraceEvent]
+} derive(@debug.Debug)
+pub fn Simulator::advance_to(Self, Int) -> Result[Array[TraceEvent], SimulatorError]
+pub fn Simulator::local_event(Self, String, String) -> Result[TraceEvent, SimulatorError]
+pub fn Simulator::new(Array[String], Int) -> Result[Self, SimulatorError]
+pub fn Simulator::pending(Self) -> Array[PendingMessage]
+pub fn Simulator::replicas(Self) -> Array[ReplicaState]
+pub fn Simulator::send(Self, String, String, String, Int) -> Result[TraceEvent, SimulatorError]
+pub fn Simulator::set_online(Self, String, Bool) -> Result[TraceEvent, SimulatorError]
+pub fn Simulator::time(Self) -> Int
+pub fn Simulator::trace(Self) -> Array[TraceEvent]
+pub fn Simulator::vector_of(Self, String) -> Result[VersionVector, SimulatorError]
+
+pub(all) enum SimulatorError {
+  EmptyReplicaId
+  DuplicateReplica(String)
+  UnknownReplica(String)
+  ReplicaOffline(String)
+  NegativeSimulationTime(Int)
+  NegativeDelay(Int)
+  TimeWentBackwards(current~ : Int, requested~ : Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum StabilityError {
+  EmptyReplicaId
+  DuplicateReplica(String)
+  UnknownReplica(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct StabilityTracker {
+  replicas : Array[String]
+  acknowledgements : Array[ReplicaAcknowledgement]
+} derive(@debug.Debug)
+pub fn StabilityTracker::acknowledgements(Self) -> Array[ReplicaAcknowledgement]
+pub fn StabilityTracker::is_stable(Self, VersionVector) -> Bool
+pub fn StabilityTracker::new(Array[String]) -> Result[Self, StabilityError]
+pub fn StabilityTracker::observe(Self, String, VersionVector) -> Result[Self, StabilityError]
+pub fn StabilityTracker::stable_frontier(Self) -> VersionVector?
+
+pub(all) enum SyncError {
+  EmptyDigestReplica
+  InvalidSyncRange(String, Int, Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SyncRange {
+  replica : String
+  from_counter : Int
+  to_counter : Int
+} derive(Eq, @debug.Debug)
+pub fn SyncRange::contains(Self, Dot) -> Bool
+pub fn SyncRange::length(Self) -> Int
+pub fn SyncRange::new(String, Int, Int) -> Result[Self, SyncError]
+
+pub(all) enum TimestampError {
+  NegativePhysicalTime(Int)
+  NegativeLogicalCounter(Int)
+  EmptyNodeId
+} derive(Eq, @debug.Debug)
+
+pub struct TraceAnalysis {
+  events : Array[TraceEvent]
+} derive(@debug.Debug)
+pub fn TraceAnalysis::concurrent_pairs(Self) -> Array[ConcurrentPair]
+pub fn TraceAnalysis::direct_edges(Self) -> Array[CausalEdge]
+pub fn TraceAnalysis::direct_predecessors(Self, Int) -> Array[CausalEdge]
+pub fn TraceAnalysis::events(Self) -> Array[TraceEvent]
+pub fn TraceAnalysis::layers(Self) -> Array[CausalLayer]
+pub fn TraceAnalysis::new(Array[TraceEvent]) -> Result[Self, TraceError]
+pub fn TraceAnalysis::relation(Self, Int, Int) -> CausalOrder?
+
+pub(all) enum TraceError {
+  DuplicateSequence(Int)
+  NonPositiveSequence(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceEvent {
+  sequence : Int
+  time : Int
+  replica : String
+  stamp : HlcTimestamp
+  context : VersionVector
+  kind : TraceKind
+} derive(@debug.Debug)
+
+pub(all) enum TraceKind {
+  Local(label~ : String)
+  Sent(target~ : String, payload~ : String)
+  Received(source~ : String, payload~ : String)
+  AvailabilityChanged(online~ : Bool)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceQuery {
+  analysis : TraceAnalysis
+} derive(@debug.Debug)
+pub fn TraceQuery::ancestors(Self, Int) -> Array[TraceEvent]
+pub fn TraceQuery::between_physical_times(Self, Int, Int) -> Array[TraceEvent]
+pub fn TraceQuery::by_replica(Self, String) -> Array[TraceEvent]
+pub fn TraceQuery::causal_slice(Self, Int) -> Array[TraceEvent]
+pub fn TraceQuery::concurrent_with(Self, Int) -> Array[TraceEvent]
+pub fn TraceQuery::critical_path(Self) -> CausalPath
+pub fn TraceQuery::descendants(Self, Int) -> Array[TraceEvent]
+pub fn TraceQuery::leaves(Self) -> Array[TraceEvent]
+pub fn TraceQuery::longest_path_to(Self, Int) -> CausalPath
+pub fn TraceQuery::new(TraceAnalysis) -> Self
+pub fn TraceQuery::roots(Self) -> Array[TraceEvent]
+pub fn TraceQuery::summary(Self) -> TraceSummary
+
+pub(all) struct TraceRow {
+  sequence : Int
+  replica : String
+  physical : Int
+  logical : Int
+  kind : String
+  detail : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceSummary {
+  event_count : Int
+  direct_edge_count : Int
+  concurrent_pair_count : Int
+  layer_count : Int
+  maximum_width : Int
+  critical_path_length : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct VectorDifference {
+  replica : String
+  left_counter : Int
+  right_counter : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct VectorEntry {
+  replica : String
+  counter : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum VectorError {
+  EmptyReplicaId
+  NegativeCounter(String, Int)
+} derive(Eq, @debug.Debug)
+
+pub struct VersionVector {
+  entries : Array[VectorEntry]
+} derive(Eq, @debug.Debug)
+pub fn VersionVector::compare(Self, Self) -> CausalOrder
+pub fn VersionVector::counter(Self, String) -> Int
+pub fn VersionVector::entries(Self) -> Array[VectorEntry]
+pub fn VersionVector::from_entries(Array[VectorEntry]) -> Result[Self, VectorError]
+pub fn VersionVector::happens_before(Self, Self) -> Bool
+pub fn VersionVector::increment(Self, String) -> Result[Self, VectorError]
+pub fn VersionVector::merge(Self, Self) -> Self
+pub fn VersionVector::new() -> Self
+
+pub(all) struct VersionedValue {
+  value : String
+  writer : String
+  context : VersionVector
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+
