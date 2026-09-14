@@ -1,0 +1,5 @@
+import {
+  "cauchyQ/moonbit-causalkit" @causal,
+}
+
+pkgtype(kind: "executable")
